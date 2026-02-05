@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import { Product, CartItem } from '../types';
 
+interface ToastState {
+  visible: boolean;
+  productName: string;
+}
+
 interface CartContextType {
   items: CartItem[];
   addToCart: (product: Product) => void;
@@ -10,12 +15,19 @@ interface CartContextType {
   getItemQuantity: (productId: string) => number;
   totalItems: number;
   totalPrice: number;
+  toast: ToastState;
+  hideToast: () => void;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [toast, setToast] = useState<ToastState>({ visible: false, productName: '' });
+
+  const hideToast = useCallback(() => {
+    setToast({ visible: false, productName: '' });
+  }, []);
 
   const addToCart = useCallback((product: Product) => {
     setItems(currentItems => {
@@ -29,6 +41,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
       return [...currentItems, { product, quantity: 1 }];
     });
+    setToast({ visible: true, productName: product.name });
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
@@ -73,7 +86,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     getItemQuantity,
     totalItems,
     totalPrice,
-  }), [items, addToCart, removeFromCart, updateQuantity, clearCart, getItemQuantity, totalItems, totalPrice]);
+    toast,
+    hideToast,
+  }), [items, addToCart, removeFromCart, updateQuantity, clearCart, getItemQuantity, totalItems, totalPrice, toast, hideToast]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
